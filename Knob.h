@@ -1,6 +1,4 @@
-#ifndef _Knob_h_
-#define _Knob_h_
-
+#pragma once
 #include "Callback.h"
 #include "Arduino.h"
 
@@ -25,6 +23,7 @@ class Knob {
     volatile int32_t count = 0;
     volatile int32_t previous_count = 0;
     volatile uint16_t state = 0;
+    volatile unsigned long rotate_millis = 0;
     volatile uint16_t sw_press = 0;
     volatile uint16_t sw_release = 0;
     // Indicates whether we need to call update when polled.
@@ -55,6 +54,9 @@ class Knob {
     void update(void);
     // Determine which pins support interrupts.
     static int calculateInterrupts(int pin1, int pin2, int sw);
+
+    // Constrain the count to be within the range.
+    void constrainCount();
     
   public:
     Knob(const char *name, int pin1, int pin2, int sw = -1);
@@ -99,5 +101,3 @@ class Knob {
       return *this;
     }
 };
-
-#endif

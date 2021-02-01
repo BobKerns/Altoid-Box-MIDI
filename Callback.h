@@ -1,5 +1,4 @@
-#ifndef _Callback_h_
-#define _Callback_h_
+#pragma once
 #undef min
 #undef max
 #include <functional>
@@ -109,5 +108,3 @@ class Callback {
     return NULL;
   }
 };
-
-#endif

@@ -7,6 +7,7 @@ callbackFn Knob::localAttachInterrupt(int pin, ISR fn, int mode) {
 }
 // Update the state and count.
 void Knob::update(void) {
+  rotate_millis = millis();
    uint8_t s = state & 3;
    if (digitalRead(pin1)) s |= 4;
    if (digitalRead(pin2)) s |= 8;
@@ -22,14 +23,29 @@ void Knob::update(void) {
      default:
        count -= 2; break;
    }
-   if (count < min_count) {
-      count = wrap ? max_count - (min_count - count - 1) : min_count;
-   }
-   if (count > max_count) {
-      count = wrap ? min_count + (count - max_count - 1) : max_count;
-   }
+   constrainCount();
    state = (s >> 2);
 }
+
+void Knob::constrainCount() {
+   if (wrap) {
+     auto size = max_count - min_count + 1;
+     while (count >= max_count) {
+      count -= size;
+     }
+     while (count < min_count) {
+      count += size;
+     }
+   }  {
+     if (count < min_count) {
+        count = min_count;
+     }
+     if (count > max_count) {
+        count = max_count;
+     }
+   }
+}
+
 // Determine which pins support interrupts.
 int Knob::calculateInterrupts(int pin1, int pin2, int sw) {
   return (digitalPinToInterrupt(pin1) != NOT_AN_INTERRUPT ? 1 : 0) | (digitalPinToInterrupt(pin2) != NOT_AN_INTERRUPT ? 2 : 0) | ((sw >= 0 && digitalPinToInterrupt(sw) != NOT_AN_INTERRUPT) ? 4 : 0);
@@ -38,8 +54,11 @@ int Knob::calculateInterrupts(int pin1, int pin2, int sw) {
 Knob::Knob(const char *name, int pin1, int pin2, int sw):
   knob_name(name), pin1(pin1), pin2(pin2), sw(sw), idx(next_idx++), interruptFlags(calculateInterrupts(pin1, pin2, sw)) {
 }
+
 // Called during setup()
 void Knob::start() {
+   if (digitalRead(pin1)) state |= 1;
+   if (digitalRead(pin2)) state |= 2;
   localAttachInterrupt(pin1, [this](void) -> void {
     update();
   }, CHANGE);
@@ -57,25 +76,49 @@ void Knob::start() {
   }
 }
 int Knob::read() {
+  auto resync = [this] {
+    switch (count_precision) {
+      case Precision::NORMAL:
+      auto skew = count & 0x3;
+      if (skew) {
+        unsigned long now = millis();
+        if (now - rotate_millis > 500) {
+          // Round, unless TDC.
+          switch (skew) {
+            case 1:
+              count = count - 1;
+              constrainCount();
+              break;
+            case 3:
+              count = count + 1;
+              constrainCount();
+              break;
+          }
+        }
+      }
+    }
+  };
   auto x = 4/count_precision;
-  auto offset = x / 2;
   switch (interruptFlags & 0x3) {
     case 0:
       // No need for synchronization
+      resync();
       update();
-      return (count + offset) / x;
+      return (count + count_precision - 1) / x;
     case 1:
     case 2:
       // Need to synchronize and update
       noInterrupts();
+      resync();
       update();
       break;
     case 3:
       noInterrupts();
+      resync();
   }
   auto val = count;
   interrupts();
-  auto user_count = (val + offset) / x;
+  auto user_count = (val) / x;
   if (on_change) {
     if (user_count != previous_count) {
       on_change(*this, previous_count, user_count);
@@ -93,8 +136,7 @@ void Knob::write(int c) {
 
 Knob &Knob::minCount(int c) {
   auto x = 4/count_precision;
-  auto offset = 2 / count_precision;
-  auto nval = c == NO_MINIMUM ? NO_MINIMUM : x * c - offset;
+  auto nval = c == NO_MINIMUM ? NO_MINIMUM : x * c;
   noInterrupts();
   min_count = nval;
   interrupts();
@@ -102,8 +144,7 @@ Knob &Knob::minCount(int c) {
 }
 Knob &Knob::maxCount(int c) {
   auto x = 4/count_precision;
-  auto offset = 2 / count_precision;
-  auto nval = c == NO_MAXIMUM ? NO_MAXIMUM : x * c + offset;
+  auto nval = c == NO_MAXIMUM ? NO_MAXIMUM : x * c + count_precision - 1;
   noInterrupts();
   max_count = nval;
   interrupts();
@@ -112,10 +153,9 @@ Knob &Knob::maxCount(int c) {
 
 // Range values are inclusive.
 Knob &Knob::range(int lowerBound, int upperBound, bool doWrap) {
-  auto offset = 2/count_precision;
   auto x = 4/count_precision;
-  auto nLower = lowerBound == NO_MINIMUM ? NO_MINIMUM : lowerBound * x - offset;
-  auto nUpper = upperBound == NO_MAXIMUM ? NO_MAXIMUM : upperBound * x + offset - 1;
+  auto nLower = lowerBound == NO_MINIMUM ? NO_MINIMUM : lowerBound * x;
+  auto nUpper = upperBound == NO_MAXIMUM ? NO_MAXIMUM : upperBound * x + count_precision - 1;
   noInterrupts();
   min_count = nLower;
   max_count = nUpper;
@@ -135,9 +175,8 @@ Knob &Knob::range(int lowerBound, bool wrap) {
 }
 
 std::tuple<int32_t, int32_t, bool> Knob::getRange() const {
-  auto offset = 2/count_precision;
   auto x = 4/count_precision;
-  return std::make_tuple((min_count + offset) / x, (max_count - offset + 1) / x, wrap);
+  return std::make_tuple((min_count) / x, (max_count - count_precision + 1) / x, wrap);
 }
 
 std::tuple<int32_t, int32_t, bool> Knob::getRawRange() const {

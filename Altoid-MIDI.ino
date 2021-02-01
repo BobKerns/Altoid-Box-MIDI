@@ -18,10 +18,11 @@
 
 #include "Callback.h"
 #include "Knob.h"
+#include "Menu.h"
 
-
-
-DisplaySSD1306_128x64_I2C display(-1);
+using Display = DisplaySSD1306_128x64_I2C;
+Display display(-1);
+using DMenu = Menu<Display>;
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 32 // OLED display height, in pixels
@@ -37,13 +38,23 @@ enum MOP {
 };
 void onNoteOn(byte cable, byte channel, byte note, byte velocity);
 void onNoteOff(byte cable, byte channel, byte note, byte velocity);
+
 Encoder enc(KNOB1_P1, KNOB1_P2);
 
 Knob knobA("A", 9, 10, 8);
 Knob knobB("B", 2, 3, 4);
 Knob knobC("C", 6, 7, 1);
 
-const char *DIGITS = "0123456789abcdef";
+const char* const PROGMEM programs[] = {"Off", "Lead", "Piano", "Orch+Piano", "Orchestra", "Orch+Pad", "Pad", "Reed", "Flutes", "Brass", "Strings", "B", "C4", "C#4", "Percussion", "Tuned Perc", "E4", "F4", "F#4", "Solo 1", "Solo 2", "Solo 3", "Solo 4", "FX"};
+const uint8_t num_programs = sizeof(programs)/sizeof(const char *);
+DMenu programMenu(num_programs, programs);
+
+
+const char* const PROGMEM kits[] = {"Percussion", "Tuned Perc", "E4", "F4", "F#4", "Solo 1", "Solo 2", "Solo 3", "Solo 4", "FX"};
+const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
+DMenu kitMenu(num_kits, kits);
+
+const char * PROGMEM DIGITS = "0123456789abcdef";
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -52,8 +63,8 @@ void setup() {
   pinMode(1, INPUT);
   pinMode(2, INPUT);
   pinMode(3, INPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
+ // pinMode(4, OUTPUT);
+ // pinMode(5, OUTPUT);
   pinMode(6, INPUT);
   pinMode(7, INPUT);
   pinMode(8, INPUT);
@@ -71,29 +82,34 @@ void setup() {
   CABLE2.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(2, channel, note, velocity);});
   CABLE3.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(3, channel, note, velocity);});
   CABLE3.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(3, channel, note, velocity);});
-  auto config = [](Knob &knob, uint8_t chan){
+  auto config = [](Knob &knob, DMenu &menu, uint8_t chan){
     knob
-    .range(0, 255, true)
+    .range(0, menu.size() - 1, true)
     .precision(Knob::Precision::NORMAL)
-    .onChange([chan](auto knob, auto old, auto pos){
-      onKnobChange(knob, 1, pos);
+    .onChange([&menu, chan](auto knob, auto old, auto pos){
+      onKnobChange(knob, menu, chan, pos);
     })
     .start();
   };
-  config(knobA, 1);
-  config(knobB, 2);
-  config(knobC, 3);
+  config(knobA, programMenu, 1);
+  config(knobB, programMenu, 2);
+  config(knobC, kitMenu, 3);
  
     display.begin();
-    display.fill(0x02);
-    display.setFixedFont(ssd1306xled_font6x8);
-    Serial.flush();
+    display.fill(0x00);
+    display.setOffset(0, 0);
+    display.setTextCursor(0, 0);
+    display.getInterface().setStartLine(0);
+    display.clear();
+    display.setFixedFont(ssd1306xled_font8x16);
+    display.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
+    display.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
 }
 
-void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos) {
+void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) {
   char buf[8];
   CABLE1.sendProgramChange(pos & 255, channel);
-  const auto [rangeMin, rangeMax, wrap] = knob.getRawRange();
+  const auto [rangeMin, rangeMax, wrap] = knob.getRange();
   Serial.print(knob.getName());
   Serial.print(": ");
   Serial.print(pos, DEC);
@@ -104,13 +120,33 @@ void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos) {
   buf[1] = DIGITS[(pos/10)%10];
   buf[2] = DIGITS[pos%10];
   buf[3] = '\0';
+  // Suppress leading zero and right-justify.
+  auto numStr = buf;
+  auto numStart = 127 - 6 * 3;
+  if (buf[0] == '0') {
+    numStr++;
+    numStart += 6;
+    if (buf[1] == '0') {
+      numStr++;
+      numStart += 6;
+    }
+  }
+  display.clear();
+  display.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
+  display.printFixed(103, 0, numStr, STYLE_NORMAL);
+  const auto size = rangeMax - rangeMin;
+  const auto relative = pos - rangeMin;
+  const auto percent = (relative * 100) / size;
+  //display.drawProgressBar(percent);
+  menu.select(pos);
+  menu.draw(display);
 }
 
 void onClick(byte n) {
   enc.write(n * 4);
 }
 
-const char * const NOTES[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+const char * const PROGMEM NOTES[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
 void clearLEDs() {
   digitalWrite(PIN_LED2, HIGH); 
