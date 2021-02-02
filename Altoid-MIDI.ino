@@ -59,6 +59,8 @@ void setup() {
     })
     .start();
   };
+  programMenu.wrap();
+  kitMenu.wrap();
   config(knobA, programMenu, 1);
   config(knobB, programMenu, 2);
   config(knobC, kitMenu, 3);
