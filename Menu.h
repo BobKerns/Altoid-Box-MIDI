@@ -24,4 +24,7 @@ class Menu {
     inline uint8_t size() const {
       return count;
     }
+    inline const char *item(uint8_t idx) const {
+      return items[idx];
+    }
 };

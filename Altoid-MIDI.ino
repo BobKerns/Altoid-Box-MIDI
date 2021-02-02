@@ -4,6 +4,7 @@
 #include "Knob.h"
 #include "Menu.h"
 #include "DisplayMgr.h"
+#include "ChannelState.h"
 
 using DMenu = Menu<Display>;
 
@@ -17,6 +18,26 @@ void onNoteOff(byte cable, byte channel, byte note, byte velocity);
 Knob knobA("Casio", A9, A10, A8);
 Knob knobB("Keylab", A2, A3, A1);
 Knob knobC("Atom SQ", A6, A7, A0);
+
+ChannelState currentState[] = {
+  ChannelState(0),
+  ChannelState(1),
+  ChannelState(2),
+  ChannelState(3),
+  ChannelState(4),
+  ChannelState(5),
+  ChannelState(6),
+  ChannelState(7),
+  ChannelState(8),
+  ChannelState(9),
+  ChannelState(10),
+  ChannelState(11),
+  ChannelState(12),
+  ChannelState(13),
+  ChannelState(14),
+  ChannelState(15)
+};
+
 
 const char *selected[] = { "--??--", "--??--", "--??--"};
 
@@ -47,15 +68,8 @@ void setup() {
     .onChange([&menu, chan](auto knob, auto old, auto pos){
       onKnobChange(knob, menu, chan, pos);
     })
-    .onPress([](Knob& knob, bool state){
-      showBodyFor(1000, [state]{
-        display.printFixedN(0, 16, state ? "ON" : "OFF", STYLE_BOLD, FONT_SIZE_2X);
-      });
-    })
-    .onRelease([](Knob& knob, bool state){
-      showBodyFor(1000, [state]{
-        display.printFixedN(0, 16, state ? "ON" : "OFF", STYLE_BOLD, FONT_SIZE_2X);
-      });
+    .onPress([chan](Knob& knob, bool state){
+      onKnobClick(knob, chan);
     })
     .start();
   };
@@ -84,7 +98,28 @@ void loop() {
 
 const char * PROGMEM DIGITS = "0123456789abcdef";
 
+void onKnobClick(const Knob& knob, uint8_t channel) {
+  auto &state = currentState[channel - 1];
+  if (state.on) {
+    state.on = false;
+    CABLE1.sendProgramChange(0, channel);
+    showBodyFor(1000, []{
+      display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
+    });
+  } else {
+    state.on = true;
+    CABLE1.sendProgramChange(state.program, channel);
+    showBodyFor(1000, [state]{
+      display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
+    });
+  }
+}
+
 void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) {
+  auto &state = currentState[channel - 1];
+  state.program = pos & 255;
+  state.programName = menu.item(state.program);
+  state.on = true;
   CABLE1.sendProgramChange(pos & 255, channel);
   Serial.print(knob.getName());
   Serial.print(": ");
@@ -92,7 +127,7 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
   Serial.print("[");
   Serial.print(channel);
   Serial.println("]");
-  showFor(10000, [knob, pos]() {
+  showFor(5000, [knob, pos]() {
   char buf[8];
       buf[0] = DIGITS[(pos/100)%10];
       buf[1] = DIGITS[(pos/10)%10];
@@ -122,10 +157,6 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
     menu.select(pos);
     menu.draw(display);
   });
-}
-
-void onClick(bool on) {
-  
 }
 
 const char * const PROGMEM NOTES[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
@@ -164,7 +195,15 @@ void defaultDisplayHead() {
 }
 
 void defaultDisplayBody() {
-  display.printFixed(0, 16, programs[knobA.read()], STYLE_BOLD);
-  display.printFixed(0, 32, programs[knobB.read()], STYLE_BOLD);
-  display.printFixed(0, 48, kits[knobC.read()], STYLE_BOLD);
+  auto line = [](uint8_t i){
+    auto &state = currentState[i];
+    if (state.on) {
+      display.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
+    } else {
+      display.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
+    }
+  };
+  line(0);
+  line(1);
+  line(2);
 }
