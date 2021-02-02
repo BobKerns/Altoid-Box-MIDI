@@ -1,5 +1,9 @@
-#define KNOB_TRACE
+//define KNOB_TRACE
 #include "Knob.h"
+
+#ifdef KNOB_TRACE
+#include "DisplayMgr.h"
+#endif
 
 unsigned int Knob::next_idx = 0;
 
@@ -50,6 +54,7 @@ void Knob::constrainCount() {
 // This runs both at interrupt level and main program level
 void Knob::updateSwitch() {
   auto press = !digitalRead(sw);
+  // Transitions with 'M' in the I/M collumn must be handled at the main program level by checkSwitch/handlerSwitch
   switch (sw_state) {
     //  -  -   -  I T       ON    -- => PRESSED_DEBOUNCE
     case IDLE:
@@ -72,9 +77,6 @@ void Knob::updateSwitch() {
       }
       break;
     }
-    //
-    // These have to be handled at main program level. We only handle transitions that don't involve calls.
-    // That is, ones with 'I' in the I/M collumn
     //  1  -   -  M -       ON    P- => PRESSED_HANDLED
     //            M T       OFF   P- => HANDLED_RELEASED_DEBOUNCE
     //            I T       OFF   -- => PRESSED_RELEASED_DEBOUNCE
@@ -126,10 +128,12 @@ void Knob::updateSwitch() {
       break;
     //  1   1  1  M -       -     P- => HANDLED_RELEASED_DEBOUNCE
     //            I - TIME  -     -- => PRESSED_RELEASED
-    case PRESSED_RELEASED_DEBOUNCE:
+    case PRESSED_RELEASED_DEBOUNCE: {
       if (sw_state_ms + debounce_ms < millis()) {
         sw_state = PRESSED_RELEASED;
       }
+      break;
+    }
     //  1   1  -  M -       ON    PR => PRESSED_HANDLED => IDLE *
     case PRESSED_RELEASED:
       break;
@@ -264,6 +268,11 @@ int Knob::read() {
           sw_state = HANDLED_RELEASED_DEBOUNCE;
           break;
       }
+#ifdef KNOB_TRACE
+     if (idx == 0) {
+        showBodyFor(1000, [this]{ display.printFixed(0, 16, switchState(), STYLE_NORMAL); });
+     }
+#endif      
     }
     return cur_state;
   };
@@ -314,6 +323,7 @@ int Knob::read() {
       noInterrupts();
       resync();
   }
+  updateSwitch();
   auto val = count;
   // Pick up the current state, and if we're going to call, perform that transition while interrupts are locked.
   auto cur_state = sw_state;
