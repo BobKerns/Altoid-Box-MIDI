@@ -2,4 +2,4 @@
 #include "Window.cpp"
 #include "DisplayMgr.h"
 
-template class WindowImpl<Display>;
+template class WindowImpl<RawDisplay>;

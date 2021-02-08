@@ -7,7 +7,7 @@
 #include "ChannelState.h"
 #include "Window.h"
 
-using DMenu = Menu<Window>;
+using DMenu = Menu<Display>;
 
 USBMIDI_CREATE_INSTANCE(0, CABLE1);
 //USBMIDI_CREATE_INSTANCE(1, CABLE2);
@@ -86,10 +86,20 @@ void setup() {
   config(knobB, programMenu, 2);
   config(knobC, kitMenu, 3);
  
-  window.begin();
+  display.begin();
+  display.clear();
+  display.setTextCursor(0, 0);
+  display.setOffset(0, 0);
+  display.setFixedFont(ssd1306xled_font8x16);
+
+  rawDisplay.clear();
+  rawDisplay.setTextCursor(0, 0);
+  rawDisplay.setOffset(0, 0);
+  rawDisplay.setFixedFont(ssd1306xled_font8x16);
+  
   showBodyFor(10000, []{
 
-    window.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
+    display.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
   });
 }
 
@@ -114,6 +124,7 @@ void loop() {
       Serial.println("setup(0);");
       break;
   }
+
   doDisplay();
   CABLE1.read();
   
@@ -133,13 +144,13 @@ void onKnobClick(const Knob& knob, uint8_t channel) {
     state.on = false;
     CABLE1.sendProgramChange(0, channel);
     showBodyFor(1000, []{
-      window.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
+      display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
     });
   } else {
     state.on = true;
     CABLE1.sendProgramChange(state.program, channel);
     showBodyFor(1000, [state]{
-      window.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
+      display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
     });
   }
 }
@@ -173,11 +184,11 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
           numStart += 6;
         }
       }
-      window.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
-      window.printFixed(103, 0, numStr, STYLE_NORMAL);
+      display.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
+      display.printFixed(103, 0, numStr, STYLE_NORMAL);
   }, [&menu, pos] {
     menu.select(pos);
-    menu.draw(window);
+    menu.draw(display);
   });
 }
 
@@ -214,16 +225,16 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
 
 
 void defaultDisplayHead() {
-  window.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
+  display.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
 }
 
 void defaultDisplayBody() {
   auto line = [](uint8_t i){
     auto &state = currentState[i];
     if (state.on) {
-      window.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
+      display.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
     } else {
-      window.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
+      display.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
     }
   };
   line(0);

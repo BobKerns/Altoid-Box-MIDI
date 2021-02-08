@@ -283,8 +283,6 @@ size_t WindowImpl<D>::write(uint8_t c) {
  *
  * @note Supports only STYLE_NORMAL and STYLE_BOLD
  */
- using Display = DisplaySSD1306_128x64_I2C;
-extern Display rawDisplay;
 template<class D>
 void WindowImpl<D>::printFixed(lcdint_t xpos, lcdint_t y, const char *ch, EFontStyle style) {
   xlate(xpos, y, [this, ch, style](auto xpos, auto y, auto w, auto h){

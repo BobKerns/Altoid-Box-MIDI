@@ -6,10 +6,10 @@
 #include <functional>
 #include "Window.h"
 
-using Display = DisplaySSD1306_128x64_I2C;
-//extern WindowImpl<Display> display;
+using RawDisplay = DisplaySSD1306_128x64_I2C;
+extern RawDisplay rawDisplay;
+using Display = WindowImpl<RawDisplay>;
 extern Display display;
-extern WindowImpl<Display> window;
 
 using DisplayFn = std::function<void()>;
 
