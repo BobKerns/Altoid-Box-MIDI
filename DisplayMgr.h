@@ -4,9 +4,12 @@
 #undef min
 #undef max
 #include <functional>
+#include "Window.h"
 
 using Display = DisplaySSD1306_128x64_I2C;
+//extern WindowImpl<Display> display;
 extern Display display;
+extern WindowImpl<Display> window;
 
 using DisplayFn = std::function<void()>;
 

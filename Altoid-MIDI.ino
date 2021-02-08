@@ -1,12 +1,13 @@
-#include <USB-MIDI.h>
 
+#include <USB-MIDI.h>
 #include "Callback.h"
 #include "Knob.h"
 #include "Menu.h"
 #include "DisplayMgr.h"
 #include "ChannelState.h"
+#include "Window.h"
 
-using DMenu = Menu<Display>;
+using DMenu = Menu<Window>;
 
 USBMIDI_CREATE_INSTANCE(0, CABLE1);
 //USBMIDI_CREATE_INSTANCE(1, CABLE2);
@@ -49,18 +50,24 @@ const char* const PROGMEM kits[] = {"Percussion", "Tuned Perc", "E4", "F4", "F#4
 const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
 DMenu kitMenu(num_kits, kits);
 
+int is_set_up = -1;
 void setup() {
+  is_set_up = 5;
+  delay(2000);
+  Serial.println("In setup();");
+  
   pinMode(LED_BUILTIN, OUTPUT);
 
   CABLE1.begin(MIDI_CHANNEL_OMNI);
   CABLE1.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(1, channel, note, velocity);});
-  //CABLE2.begin(MIDI_CHANNEL_OMNI);
   CABLE1.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(1, channel, note, velocity);});
+  //CABLE2.begin(MIDI_CHANNEL_OMNI);
   //CABLE3.begin(MIDI_CHANNEL_OMNI);
   //CABLE2.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(2, channel, note, velocity);});
   //CABLE2.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(2, channel, note, velocity);});
   //CABLE3.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(3, channel, note, velocity);});
   //CABLE3.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(3, channel, note, velocity);});
+  
   auto config = [](Knob &knob, DMenu &menu, uint8_t chan){
     knob
     .range(0, menu.size() - 1, true)
@@ -71,7 +78,7 @@ void setup() {
     .onPress([chan](Knob& knob, bool state){
       onKnobClick(knob, chan);
     })
-    .start();
+    .start(Knob::PULLUP, Knob::PULLUP, Knob::PULLUP);
   };
   programMenu.wrap();
   kitMenu.wrap();
@@ -79,15 +86,37 @@ void setup() {
   config(knobB, programMenu, 2);
   config(knobC, kitMenu, 3);
  
-  display.begin();
+  window.begin();
   showBodyFor(10000, []{
-    display.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
+
+    window.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
   });
 }
 
 void loop() {
+  switch (is_set_up--) {
+    case 5:
+      Serial.println("setup(5);");
+      break;
+    case 4:
+      Serial.println("setup(4);");
+      break;
+    case 3:
+      Serial.println("setup(3);");
+      break;
+    case 2:
+      Serial.println("setup(2);");
+      break;
+    case 1:
+      Serial.println("setup(1);");
+      break;
+    case 0:
+      Serial.println("setup(0);");
+      break;
+  }
   doDisplay();
   CABLE1.read();
+  
   //CABLE2.read();
   //CABLE3.read();
   
@@ -104,13 +133,13 @@ void onKnobClick(const Knob& knob, uint8_t channel) {
     state.on = false;
     CABLE1.sendProgramChange(0, channel);
     showBodyFor(1000, []{
-      display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
+      window.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
     });
   } else {
     state.on = true;
     CABLE1.sendProgramChange(state.program, channel);
     showBodyFor(1000, [state]{
-      display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
+      window.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
     });
   }
 }
@@ -144,18 +173,11 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
           numStart += 6;
         }
       }
-      display.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
-      display.printFixed(103, 0, numStr, STYLE_NORMAL);
+      window.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
+      window.printFixed(103, 0, numStr, STYLE_NORMAL);
   }, [&menu, pos] {
-    /*
-    const auto [rangeMin, rangeMax, wrap] = knob.getRange();
-    const auto size = rangeMax - rangeMin;
-    const auto relative = pos - rangeMin;
-    const auto percent = (relative * 100) / size;
-    display.drawProgressBar(percent);
-    */
     menu.select(pos);
-    menu.draw(display);
+    menu.draw(window);
   });
 }
 
@@ -190,17 +212,18 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
     Serial.print('\n');
 }
 
+
 void defaultDisplayHead() {
-  display.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
+  window.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
 }
 
 void defaultDisplayBody() {
   auto line = [](uint8_t i){
     auto &state = currentState[i];
     if (state.on) {
-      display.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
+      window.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
     } else {
-      display.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
+      window.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
     }
   };
   line(0);

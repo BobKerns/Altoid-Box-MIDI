@@ -1,6 +1,6 @@
 
 #include "DisplayMgr.h"
-
+extern Display rawDisplay;
 Display display(-1);
 
 
@@ -9,11 +9,14 @@ uint32_t tmpDisplay_end = 0;
 DisplayFn displayHead = defaultDisplayHead;
 DisplayFn displayBody = defaultDisplayBody;
 
+WindowImpl<Display> window(display);
+
 void show(DisplayFn head, DisplayFn body) {
   display.clear();
   display.setTextCursor(0, 0);
   display.setOffset(0, 0);
   display.setFixedFont(ssd1306xled_font8x16);
+
   head();
   display.setOffset(0, 16);
   body();
