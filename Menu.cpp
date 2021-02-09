@@ -43,8 +43,10 @@ void Menu<T>::draw(T &display) {
           ? items[idx - count]
           : items[idx];
     if (i == selected) {
+      display.invertColors();
       display.printFixed(left, top + i * 16, "> ", STYLE_NORMAL);
-      display.printFixed(left + 12, top + i * 16, item, STYLE_NORMAL);
+      display.printFixed(left + 12, top + i * 16, item, STYLE_BOLD);
+      display.invertColors();
     } else {
      display.printFixed(left, top + i * 16, item, STYLE_NORMAL);
     }
