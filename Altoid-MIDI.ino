@@ -16,6 +16,7 @@ USBMIDI_CREATE_INSTANCE(0, CABLE1);
 
 void onNoteOn(byte cable, byte channel, byte note, byte velocity);
 void onNoteOff(byte cable, byte channel, byte note, byte velocity);
+void onProgramChange(byte cable,  byte channel, byte b1, byte b2);
 
 Knob knobA("Casio", A9, A10, A8);
 Knob knobB("Keylab", A2, A3, A1);
@@ -59,6 +60,7 @@ void setup() {
   CABLE1.begin(MIDI_CHANNEL_OMNI);
   CABLE1.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(1, channel, note, velocity);});
   CABLE1.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(1, channel, note, velocity);});
+  CABLE1.setHandleProgramChange([](byte channel, byte b2){onProgramChange(1, channel, b2);});
   //CABLE2.begin(MIDI_CHANNEL_OMNI);
   //CABLE3.begin(MIDI_CHANNEL_OMNI);
   //CABLE2.setHandleNoteOn([](byte channel, byte note, byte velocity){onNoteOn(2, channel, note, velocity);});
@@ -177,6 +179,20 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
     int octave = ((int) note) / 12 - 2;
     digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
     std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + note_name + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "") + "@" + std::to_string(velocity);
+    Serial.print(txt.c_str());
+    showHeadFor(500, [txt]{ 
+      display.invertColors();
+      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+      display.invertColors();
+    });
+}
+
+
+void onProgramChange(byte cable,  byte channel, byte b2) {
+  byte pgm = b2 % sizeof(programs) / sizeof(const char *);
+  currentState[channel - 1].program = pgm;
+  currentState[channel - 1].programName = programs[pgm];
+    std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":PGM" + " #" + std::to_string(b2);
     Serial.print(txt.c_str());
     showHeadFor(500, [txt]{ 
       display.invertColors();
