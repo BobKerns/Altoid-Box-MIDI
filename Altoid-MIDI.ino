@@ -91,15 +91,10 @@ void setup() {
   display.setTextCursor(0, 0);
   display.setOffset(0, 0);
   display.setFixedFont(ssd1306xled_font8x16);
-
-  rawDisplay.clear();
-  rawDisplay.setTextCursor(0, 0);
-  rawDisplay.setOffset(0, 0);
-  rawDisplay.setFixedFont(ssd1306xled_font8x16);
   
   showBodyFor(10000, []{
 
-    display.printFixedN (0, 16, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
+    display.printFixedN (0, 8, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
   });
 }
 
@@ -232,9 +227,11 @@ void defaultDisplayBody() {
   auto line = [](uint8_t i){
     auto &state = currentState[i];
     if (state.on) {
-      display.printFixed(0, (i + 1) * 16, state.programName, STYLE_BOLD);
+      display.printFixed(0, i * 16, state.programName, STYLE_BOLD);
     } else {
-      display.printFixed(6, (i + 1) * 16, state.programName, STYLE_ITALIC);
+      display.invertColors();
+      display.printFixed(12, i * 16, state.programName, STYLE_NORMAL);
+      display.invertColors();
     }
   };
   line(0);

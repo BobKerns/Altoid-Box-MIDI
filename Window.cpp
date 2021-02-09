@@ -1,5 +1,12 @@
-#include "Window.h"
 #include "DisplayMgr.h"
+#include "Window.h"
+
+template<class D>
+void WindowImpl<D>::setState() {
+  _display.setFont(*m_font);
+  _display.setColor(m_color);
+  _display.setBackground(m_bgColor);
+}
 /**
  * Draws pixel on specified position
  * @param x - position X

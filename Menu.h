@@ -8,7 +8,7 @@ class Menu {
   const uint8_t count;
   uint8_t selection;
   bool wrap_items = false;;
-  static const uint8_t top = 16;
+  static const uint8_t top = 0;
   static const uint8_t left = 0;
   static const uint8_t width = 128;
   static const uint8_t height = 64 - top;

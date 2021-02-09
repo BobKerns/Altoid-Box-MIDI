@@ -1,16 +1,10 @@
 #pragma once
 #include "lcdgfx.h"
+// WTF?
 #undef min
 #undef max
 
 #include <functional>
-
-inline lcdint_t min(lcdint_t a, lcdint_t b) {
-  return a < b ? a : b;
-}
-inline lcdint_t max(lcdint_t a, lcdint_t b) {
-  return a > b ? a : b;
-}
 
 class Window {
 public:
@@ -175,11 +169,11 @@ public:
     }
 
 protected:
-    lcduint_t m_offset_x = 0;
-    lcduint_t m_offset_y = 0;
-    lcduint_t m_w = 0;    ///< width of NanoCanvas area in pixels
-    lcduint_t m_h = 0;    ///< height of NanoCanvas area in pixels
-    lcduint_t m_p = 0;    ///< number of bits, used by width value: 3 equals to 8 pixels width
+    lcdint_t m_offset_x = 0;
+    lcdint_t m_offset_y = 0;
+    lcdint_t m_w = 0;    ///< width of NanoCanvas area in pixels
+    lcdint_t m_h = 0;    ///< height of NanoCanvas area in pixels
+    lcdint_t m_p = 0;    ///< number of bits, used by width value: 3 equals to 8 pixels width
     lcdint_t  m_cursorX = 0;  ///< current X cursor position for text output
     lcdint_t  m_cursorY = 0;  ///< current Y cursor position for text output
     uint8_t   m_textMode = 0; ///< Flags for current NanoCanvas mode
@@ -189,14 +183,21 @@ protected:
     NanoFont *m_font = nullptr; ///< currently set font
 
     void xlateArea(lcdint_t x, lcdint_t y, lcdint_t w, lcdint_t h, std::function<void (lcdint_t x, lcdint_t y, lcdint_t w, lcdint_t h)> fn) {
-      fn(max(m_offset_x, x + m_offset_x), max(m_offset_y, y + m_offset_y), max(0, min(w, m_w - x)), max(0, min(h, m_h - y)));
+      setState();
+      lcdint_t tx = max(m_offset_x, x + m_offset_x);
+      lcdint_t ty = max(m_offset_y, y + m_offset_y);
+      lcdint_t tw = max(0, min(w, (m_w - x)));
+      lcdint_t th = max(0, min(h, (m_h - y)));
+      fn(tx, ty, tw, th);
     }
     void xlate(lcdint_t x, lcdint_t y, std::function<void (lcdint_t x, lcdint_t y, lcdint_t w, lcdint_t h)> fn) {
-      fn(max(m_offset_x, x + m_offset_x), max(m_offset_y, y + m_offset_y), max(0, m_w - x), max(0, m_h - y));
+      xlateArea(x, y, m_w, m_h, fn);
     }
     void xlate2(lcdint_t x1, lcdint_t y1, lcdint_t x2, lcdint_t y2, std::function<void (lcdint_t x1, lcdint_t y1, lcdint_t x2, lcdint_t y2)> fn) {
+      setState();
       fn(max(m_offset_x, x1 + m_offset_x), max(m_offset_y, y1 + m_offset_y), max(m_offset_x, x2 + m_offset_x), max(m_offset_y, y2 + m_offset_y));
     }
+    virtual void setState() = 0;
 
 public:
     /**
@@ -429,6 +430,7 @@ template<class D>
 class WindowImpl: public Window {
   protected:
     D &_display;
+    void setState();
   public:
     void begin() { _display.begin(); }
     void end() { _display.end(); }
