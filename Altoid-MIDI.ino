@@ -6,6 +6,7 @@
 #include "DisplayMgr.h"
 #include "ChannelState.h"
 #include "Window.h"
+#include <string>
 
 using DMenu = Menu<Display>;
 
@@ -50,11 +51,8 @@ const char* const PROGMEM kits[] = {"Percussion", "Tuned Perc", "E4", "F4", "F#4
 const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
 DMenu kitMenu(num_kits, kits);
 
-int is_set_up = -1;
 void setup() {
-  is_set_up = 5;
   delay(2000);
-  Serial.println("In setup();");
   
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -99,33 +97,12 @@ void setup() {
 }
 
 void loop() {
-  switch (is_set_up--) {
-    case 5:
-      Serial.println("setup(5);");
-      break;
-    case 4:
-      Serial.println("setup(4);");
-      break;
-    case 3:
-      Serial.println("setup(3);");
-      break;
-    case 2:
-      Serial.println("setup(2);");
-      break;
-    case 1:
-      Serial.println("setup(1);");
-      break;
-    case 0:
-      Serial.println("setup(0);");
-      break;
-  }
-
   doDisplay();
+
   CABLE1.read();
-  
   //CABLE2.read();
   //CABLE3.read();
-  
+
   knobA.poll();
   knobB.poll();
   knobC.poll();
@@ -156,12 +133,6 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
   state.programName = menu.item(state.program);
   state.on = true;
   CABLE1.sendProgramChange(pos & 255, channel);
-  Serial.print(knob.getName());
-  Serial.print(": ");
-  Serial.print(pos, DEC);
-  Serial.print("[");
-  Serial.print(channel);
-  Serial.println("]");
   showFor(5000, [knob, pos]() {
   char buf[8];
       buf[0] = DIGITS[(pos/100)%10];
@@ -205,17 +176,13 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
     const char * note_name = NOTES[((int)note) % 12];
     int octave = ((int) note) / 12 - 2;
     digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
-    Serial.print(cable);
-    Serial.print('!');
-    Serial.print(channel);
-    Serial.print(':');
-    Serial.print(msg);
-    Serial.print(' ');
-    Serial.print(note_name);
-    Serial.print(octave);
-    Serial.print("@");
-    Serial.print(velocity);
-    Serial.print('\n');
+    std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + note_name + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "") + "@" + std::to_string(velocity);
+    Serial.print(txt.c_str());
+    showHeadFor(500, [txt]{ 
+      display.invertColors();
+      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+      display.invertColors();
+    });
 }
 
 
