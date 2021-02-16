@@ -181,19 +181,18 @@ void onNoteOff(byte cable, byte channel, byte note, byte velocity) {
 int notes_on = 0;
 
 void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, byte velocity) {
-    notes_on += (on ? 1 : -1);
-    const char * note_name = NOTES[((int)note) % 12];
-    int octave = ((int) note) / 12 - 2;
-    digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
+  notes_on += (on ? 1 : -1);
+  const char * note_name = NOTES[((int)note) % 12];
+  int octave = ((int) note) / 12 - 2;
+  digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
+  if (last_send + send_delay <= millis()) {
     std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + note_name + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "") + "@" + std::to_string(velocity);
-    //Serial.print(txt.c_str());
-    if (last_send + send_delay <= millis()) {
-      showHeadFor(500, [txt]{
-        display.invertColors();
-        display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
-        display.invertColors();
-      });
-    }
+    showHeadFor(500, [txt]{
+      display.invertColors();
+      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+      display.invertColors();
+    });
+  }
 }
 
 
@@ -201,15 +200,14 @@ void onProgramChange(byte cable,  byte channel, byte b2) {
   byte pgm = b2 % sizeof(programs) / sizeof(const char *);
   currentState[channel - 1].program = pgm;
   currentState[channel - 1].programName = programs[pgm];
+  if (last_send + send_delay <= millis()) {
     std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":PGM" + " #" + std::to_string(b2);
-    //Serial.print(txt.c_str());
-    if (last_send + send_delay <= millis()) {
-      showHeadFor(500, [txt]{ 
-        display.invertColors();
-        display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
-        display.invertColors();
-      });
-    }
+    showHeadFor(500, [txt]{ 
+      display.invertColors();
+      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+      display.invertColors();
+    });
+  }
 }
 
 
