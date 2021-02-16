@@ -21,12 +21,20 @@ void show(DisplayFn head, DisplayFn body) {
   body();
 }
 
+// Rate limit the temporary displays
+static uint32_t last_tmp = 0;
+static const uint32_t tmp_rate = 200;
+
 void showFor(uint32_t ms, DisplayFn head, DisplayFn body) {
-  tmpDisplay_end = ms + millis();
-  tmpDisplay = [head, body]{
-    show(head, body);
-    tmpDisplay = NULL;
-  };
+  auto now = millis();
+  if (last_tmp + tmp_rate < now) {
+    tmpDisplay_end = ms + now;
+    tmpDisplay = [now, head, body]{
+      last_tmp = now;
+      show(head, body);
+      tmpDisplay = NULL;
+    };
+  }
 }
 
 void showHeadFor(uint32_t ms, DisplayFn head) {
