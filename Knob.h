@@ -22,8 +22,8 @@ class Knob {
   };
   private:
     // Pins
-    const int pin1;
-    const int pin2;
+    const int clk;
+    const int dt;
     const int sw;
     
     enum SwitchState {            // --PENDING- I 
@@ -111,7 +111,7 @@ class Knob {
     const uint8_t debounce_ms = 20;
     
   public:
-    Knob(const char *name, int pin1, int pin2, int sw = -1);
+    Knob(const char *name, int clk, int dt, int sw = -1);
     // Called during setup()
     void start(PinMode mode1 = NOPULLUP, PinMode mode2 = NOPULLUP, PinMode modeSw = NOPULLUP);
     int read();

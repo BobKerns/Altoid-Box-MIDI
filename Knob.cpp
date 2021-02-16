@@ -14,8 +14,8 @@ callbackFn Knob::localAttachInterrupt(int pin, ISR fn, int mode) {
 void Knob::updateCount(void) {
   rotate_millis = millis();
    uint8_t s = state & 3;
-   if (digitalRead(pin1)) s |= 4;
-   if (digitalRead(pin2)) s |= 8;
+   if (digitalRead(dt)) s |= 4;
+   if (digitalRead(clk)) s |= 8;
    switch (s) {
      case 0: case 5: case 10: case 15:
        break;
@@ -141,16 +141,16 @@ void Knob::updateSwitch() {
 }
 
 // Determine which pins support interrupts.
-int Knob::calculateInterrupts(int pin1, int pin2, int sw) {
-  return (digitalPinToInterrupt(pin1) != NOT_AN_INTERRUPT ? 1 : 0) | (digitalPinToInterrupt(pin2) != NOT_AN_INTERRUPT ? 2 : 0) | ((sw >= 0 && digitalPinToInterrupt(sw) != NOT_AN_INTERRUPT) ? 4 : 0);
+int Knob::calculateInterrupts(int clk, int dt, int sw) {
+  return (digitalPinToInterrupt(clk) != NOT_AN_INTERRUPT ? 1 : 0) | (digitalPinToInterrupt(dt) != NOT_AN_INTERRUPT ? 2 : 0) | ((sw >= 0 && digitalPinToInterrupt(sw) != NOT_AN_INTERRUPT) ? 4 : 0);
 }
 
-Knob::Knob(const char *name, int pin1, int pin2, int sw):
-  knob_name(name), pin1(pin1), pin2(pin2), sw(sw), idx(next_idx++), interruptFlags(calculateInterrupts(pin1, pin2, sw)) {
+Knob::Knob(const char *name, int clk, int dt, int sw):
+  knob_name(name), clk(clk), dt(dt), sw(sw), idx(next_idx++), interruptFlags(calculateInterrupts(clk, dt, sw)) {
 }
 
 // Called during setup()
-void Knob::start(PinMode mode1, PinMode mode2, PinMode modeSw) {
+void Knob::start(PinMode modeClk, PinMode modeDt, PinMode modeSw) {
   auto setMode = [](int pin, PinMode mode) {
     switch (mode) {
       case NOPULLUP:
@@ -166,20 +166,18 @@ void Knob::start(PinMode mode1, PinMode mode2, PinMode modeSw) {
       case NONE: ;
     }
   };
-  setMode(pin1, mode1);
-  setMode(pin2, mode2);
+  setMode(clk, modeClk);
+  setMode(dt, modeDt);
   if (sw >= 0) {
     setMode(sw, modeSw);
   }
   delay(500);
-  if (digitalRead(pin1)) state |= 1;
-  if (digitalRead(pin2)) state |= 2;
-  localAttachInterrupt(pin1, [this](void) -> void {
-    updateCount();
-  }, CHANGE);
-  localAttachInterrupt(pin2, [this](void) -> void {
-    updateCount();
-  }, CHANGE);
+  if (digitalRead(clk)) state |= 1;
+  if (digitalRead(dt)) state |= 2;
+  auto update = [this]{ updateCount(); };
+  localAttachInterrupt(clk, update, CHANGE);
+  localAttachInterrupt(dt, update, CHANGE);
+  update();
   if (sw >= 0) {
     updateSwitch();
     localAttachInterrupt(sw, [this](void) -> void {

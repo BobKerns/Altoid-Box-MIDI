@@ -18,9 +18,9 @@ void onNoteOn(byte cable, byte channel, byte note, byte velocity);
 void onNoteOff(byte cable, byte channel, byte note, byte velocity);
 void onProgramChange(byte cable,  byte channel, byte b1, byte b2);
 
-Knob knobA("Casio", A9, A10, A8);
-Knob knobB("Keylab", A2, A3, A1);
-Knob knobC("Atom SQ", A6, A7, A0);
+Knob knobA("Casio", A10, A9, A8);
+Knob knobB("Keylab", A3, A2, A1);
+Knob knobC("Atom SQ", A7, A6, A0);
 
 ChannelState currentState[] = {
   ChannelState(0),
