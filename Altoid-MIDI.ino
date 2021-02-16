@@ -52,6 +52,10 @@ const char* const PROGMEM kits[] = {"Percussion", "Tuned Perc", "E4", "F4", "F#4
 const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
 DMenu kitMenu(num_kits, kits);
 
+// When we last sent a message. We suppress display of incoming MIDI for 500 ms after sending
+uint32_t last_send = 0;
+const uint32_t send_delay = 500;
+
 void setup() {
   delay(2000);
   
@@ -116,12 +120,14 @@ void onKnobClick(const Knob& knob, uint8_t channel) {
   auto &state = currentState[channel - 1];
   if (state.on) {
     state.on = false;
+    last_send = millis();
     CABLE1.sendProgramChange(0, channel);
     showBodyFor(1000, []{
       display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
     });
   } else {
     state.on = true;
+    last_send = millis();
     CABLE1.sendProgramChange(state.program, channel);
     showBodyFor(1000, [state]{
       display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
@@ -134,6 +140,7 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
   state.program = pos & 255;
   state.programName = menu.item(state.program);
   state.on = true;
+  last_send = millis();
   CABLE1.sendProgramChange(pos & 255, channel);
   showFor(5000, [knob, pos]() {
   char buf[8];
@@ -179,12 +186,14 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
     int octave = ((int) note) / 12 - 2;
     digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
     std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + note_name + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "") + "@" + std::to_string(velocity);
-    Serial.print(txt.c_str());
-    showHeadFor(500, [txt]{ 
-      display.invertColors();
-      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
-      display.invertColors();
-    });
+    //Serial.print(txt.c_str());
+    if (last_send + send_delay <= millis()) {
+      showHeadFor(500, [txt]{
+        display.invertColors();
+        display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+        display.invertColors();
+      });
+    }
 }
 
 
@@ -193,12 +202,14 @@ void onProgramChange(byte cable,  byte channel, byte b2) {
   currentState[channel - 1].program = pgm;
   currentState[channel - 1].programName = programs[pgm];
     std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":PGM" + " #" + std::to_string(b2);
-    Serial.print(txt.c_str());
-    showHeadFor(500, [txt]{ 
-      display.invertColors();
-      display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
-      display.invertColors();
-    });
+    //Serial.print(txt.c_str());
+    if (last_send + send_delay <= millis()) {
+      showHeadFor(500, [txt]{ 
+        display.invertColors();
+        display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
+        display.invertColors();
+      });
+    }
 }
 
 
