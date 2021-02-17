@@ -41,9 +41,6 @@ ChannelState currentState[] = {
   ChannelState(15)
 };
 
-
-const char *selected[] = { "--??--", "--??--", "--??--"};
-
 const char* const PROGMEM programs[] = {"Off", "Lead", "Piano", "Orch+Piano", "Orchestra", "Orch+Pad", "Pad", "Reed", "Flutes", "Brass", "Strings", "B", "C4", "C#4", "Percussion", "Tuned Perc", "E4", "F4", "F#4", "Solo 1", "Solo 2", "Solo 3", "Solo 4", "FX"};
 const uint8_t num_programs = sizeof(programs)/sizeof(const char *);
 DMenu programMenu(num_programs, programs);
@@ -86,9 +83,9 @@ void setup() {
   };
   programMenu.wrap();
   kitMenu.wrap();
-  config(knobA, programMenu, 1);
-  config(knobB, programMenu, 2);
-  config(knobC, kitMenu, 3);
+  config(knobA, programMenu, 16);
+  config(knobB, programMenu, 1);
+  config(knobC, kitMenu, 10);
  
   display.begin();
   display.clear();
@@ -116,19 +113,36 @@ void loop() {
 
 const char * PROGMEM DIGITS = "0123456789abcdef";
 
+
+const char * const PROGMEM NOTES[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+
+std::string noteName(int note) {
+  const char * note_name = NOTES[((int)note) % 12];
+  int octave = ((int) note) / 12 - 2;
+  return std::string(note_name) + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "");
+}
+
+
+void sendProgramChange(uint8_t program, uint8_t channel) {
+  last_send = millis();
+  currentState[channel - 1].keys.doKeys([channel](uint8_t key){
+    CABLE1.sendNoteOff(key, 0, channel);
+    return false;
+  });
+  CABLE1.sendProgramChange(program, channel);
+}
+
 void onKnobClick(const Knob& knob, uint8_t channel) {
   auto &state = currentState[channel - 1];
   if (state.on) {
     state.on = false;
-    last_send = millis();
-    CABLE1.sendProgramChange(0, channel);
+    sendProgramChange(0, channel);
     showBodyFor(1000, []{
       display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
     });
   } else {
     state.on = true;
-    last_send = millis();
-    CABLE1.sendProgramChange(state.program, channel);
+    sendProgramChange(state.program, channel);
     showBodyFor(1000, [state]{
       display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
     });
@@ -140,8 +154,7 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
   state.program = pos & 255;
   state.programName = menu.item(state.program);
   state.on = true;
-  last_send = millis();
-  CABLE1.sendProgramChange(pos & 255, channel);
+  sendProgramChange(pos & 255, channel);
   showFor(5000, [knob, pos]() {
   char buf[8];
       buf[0] = DIGITS[(pos/100)%10];
@@ -167,14 +180,18 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
   });
 }
 
-const char * const PROGMEM NOTES[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-
 void onNoteOn(byte cable, byte channel, byte note, byte velocity) {
-  noteMsg(true, cable, " ON", channel, note, velocity);
+  if (velocity > 0) {
+    currentState[channel - 1].keys.down(note);
+    noteMsg(true, cable, " ON", channel, note, velocity);
+  } else {
+    onNoteOff(cable, channel, note, velocity);
+  }
 }
 
 
 void onNoteOff(byte cable, byte channel, byte note, byte velocity) {
+  currentState[channel - 1].keys.up(note);
   noteMsg(false, cable, "OFF", channel, note, velocity);
 }
 
@@ -182,11 +199,9 @@ int notes_on = 0;
 
 void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, byte velocity) {
   notes_on += (on ? 1 : -1);
-  const char * note_name = NOTES[((int)note) % 12];
-  int octave = ((int) note) / 12 - 2;
   digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
   if (last_send + send_delay <= millis()) {
-    std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + note_name + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "") + "@" + std::to_string(velocity);
+    std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + noteName(note) + "@" + std::to_string(velocity);
     showHeadFor(500, [txt]{
       display.invertColors();
       display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
@@ -216,8 +231,8 @@ void defaultDisplayHead() {
 }
 
 void defaultDisplayBody() {
-  auto line = [](uint8_t i){
-    auto &state = currentState[i];
+  auto line = [](uint8_t i, uint8_t channel){
+    auto &state = currentState[channel- 1];
     if (state.on) {
       display.printFixed(0, i * 16, state.programName, STYLE_BOLD);
     } else {
@@ -226,7 +241,7 @@ void defaultDisplayBody() {
       display.invertColors();
     }
   };
-  line(0);
-  line(1);
-  line(2);
+  line(0, 16);
+  line(1, 1);
+  line(2, 10);
 }
