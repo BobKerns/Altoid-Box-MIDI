@@ -18,16 +18,19 @@ class Knob {
     NOPULLUP,
     PULLUP,
     PULLDOWN,
-    NONE // Call pinMode manually before 
+    NONE // Call pinMode manually before
   };
   private:
+    // Name of this knob.
+    const char *knob_name;
     // Pins
     const int clk;
     const int dt;
     const int sw;
-    
-    enum SwitchState {            // --PENDING- I 
-                                  // ON OFF TIM M T CONDITION   HH TRANSITION TARGET  
+
+    // States of the pushbutton debounce handling.
+    enum SwitchState {            // --PENDING- I
+                                  // ON OFF TIM M T CONDITION   HH TRANSITION TARGET
                                   // == === === = = ==========  == =========================
       IDLE,                       //  -  -   -  I T       ON    -- => PRESSED_DEBOUNCE
       PRESSED_DEBOUNCE,           //  1  -   1  I - TIME, ON    -- => PRESSED
@@ -70,22 +73,22 @@ class Knob {
     // State
     volatile int32_t count = 0;
     int32_t previous_count = 0;
+    // State of the rotatry encoder
     volatile uint16_t state = 0;
     volatile unsigned long rotate_millis = 0;
+    // State of the pushbutton switch
     volatile SwitchState sw_state = IDLE;
     volatile unsigned long sw_state_ms = 0;
-    // Indicates whether we need to call update when polled.
-    const uint8_t interruptFlags;
     // Sequential index of knobs.
     static unsigned int next_idx;
     // Index of this knob
     const unsigned int idx;
-    // Name of this knob.
-    const char *knob_name;
+    // Indicates whether we need to call update when polled.
+    const uint8_t interruptFlags;
     // Allowed range. The initial values mean "not limited".
     // Range values are inclusive.
-    static const int32_t NO_MINIMUM = 0x100000000;
-    static const int32_t NO_MAXIMUM = 0x7ffffffff;
+    static const int32_t NO_MINIMUM = 0x10000000;
+    static const int32_t NO_MAXIMUM = 0x7fffffff;
     int32_t min_count = NO_MINIMUM;
     int32_t max_count = NO_MAXIMUM;
     bool wrap = false;
@@ -95,9 +98,9 @@ class Knob {
     knobPressHandler on_press;
     knobPressHandler on_release;
     knobChangeHandler on_change;
-    
+
     // AttachInterrupt but accepts closures, etc.
-    static callbackFn localAttachInterrupt(int pin, ISR fn, int mode);
+    static void localAttachInterrupt(int pin, ISR fn, int mode);
     // Update the quadrature state and count.
     void updateCount();
     // Update the switch state (debounce, etc.)
@@ -109,7 +112,7 @@ class Knob {
     void constrainCount();
 
     const uint8_t debounce_ms = 20;
-    
+
   public:
     Knob(const char *name, int clk, int dt, int sw = -1);
     // Called during setup()
@@ -119,21 +122,21 @@ class Knob {
     void write(int c);
     Knob &minCount(int c = NO_MINIMUM);
     Knob &maxCount(int c = NO_MAXIMUM);
-    
+
     // Range values are inclusive.
     Knob &range(int lowerBound, int upperBound, bool doWrap);
-    
+
     // Range values are inclusive.
     Knob &range(int lowerBound = NO_MINIMUM, int upperBound = NO_MAXIMUM);
     // Range values are inclusive.
     Knob &range(int lowerBound, bool wrap);
-  
+
     std::tuple<int32_t, int32_t, bool> getRange() const;
     std::tuple<int32_t, int32_t, bool> getRawRange() const;
-    
+
     Knob &precision(Precision p);
     Precision getPrecision() const;
-  
+
     const char * getName() const;
     Knob &name(const char *newName);
 

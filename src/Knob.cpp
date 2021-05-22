@@ -7,9 +7,10 @@
 
 unsigned int Knob::next_idx = 0;
 
-callbackFn Knob::localAttachInterrupt(int pin, ISR fn, int mode) {
+void Knob::localAttachInterrupt(int pin, ISR fn, int mode) {
   attachInterrupt(digitalPinToInterrupt(pin), Callback::next(fn), mode);
 }
+
 // Update the state and count.
 void Knob::updateCount(void) {
   rotate_millis = millis();
@@ -189,24 +190,28 @@ void Knob::start(PinMode modeClk, PinMode modeDt, PinMode modeSw) {
 int Knob::read() {
   auto resync = [this] {
     switch (count_precision) {
-      case Precision::NORMAL:
-      auto skew = count & 0x3;
-      if (skew) {
-        unsigned long now = millis();
-        if (now - rotate_millis > 500) {
-          // Round, unless TDC.
-          switch (skew) {
-            case 1:
-              count = count - 1;
-              constrainCount();
-              break;
-            case 3:
-              count = count + 1;
-              constrainCount();
-              break;
-          }
+        case Precision::NORMAL:  {
+            auto skew = count & 0x3;
+            if (skew) {
+                unsigned long now = millis();
+                if (now - rotate_millis > 500) {
+                    // Round, unless TDC.
+                    switch (skew) {
+                        case 1:
+                        count = count - 1;
+                        constrainCount();
+                        break;
+                        case 3:
+                        count = count + 1;
+                        constrainCount();
+                        break;
+                    }
+                }
+            }
+            break;
         }
-      }
+        case Precision::DOUBLE: ;
+        case Precision::QUAD: ;
     }
   };
   auto handleCount = [this](int32_t val){
@@ -265,12 +270,18 @@ int Knob::read() {
         case PRESSED_RELEASED_DEBOUNCE:
           sw_state = HANDLED_RELEASED_DEBOUNCE;
           break;
+        // Handled at interrupt level.
+        case PRESSED_DEBOUNCE:
+        case PRESSED_HANDLED:
+        case HANDLED_RELEASED_DEBOUNCE:
+        case IDLE:
+            break;
       }
 #ifdef KNOB_TRACE
      if (idx == 0) {
         showBodyFor(1000, [this]{ display.printFixed(0, 16, switchState(), STYLE_NORMAL); });
      }
-#endif      
+#endif
     }
     return cur_state;
   };
@@ -296,6 +307,13 @@ int Knob::read() {
         if (on_press) on_press(*this, true);
         if (on_release) on_release(*this, false);
         break;
+
+        // Handled at interrupt level.
+        case PRESSED_DEBOUNCE:
+        case PRESSED_HANDLED:
+        case HANDLED_RELEASED_DEBOUNCE:
+        case IDLE:
+            break;
     }
   };
   switch (interruptFlags & 0x3) {
@@ -337,8 +355,10 @@ int Knob::read() {
 }
 
 void Knob::write(int c) {
+  auto x = (c * 4/count_precision - min_count) % (max_count - min_count) + min_count;
   noInterrupts();
-  count = c;
+  count = previous_count = x;
+  sw_state = SwitchState::IDLE;
   interrupts();
 }
 

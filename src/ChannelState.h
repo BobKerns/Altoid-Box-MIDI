@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KeyTracker.h"
+#include "Knob.h"
 
 class ChannelState {
   public:
@@ -9,5 +10,6 @@ class ChannelState {
     const char * programName = "(Not set)";
     bool on = true;
     KeyTracker keys;
-    ChannelState(uint8_t channel) : channel(channel) {}
+    Knob *knob;
+    ChannelState(uint8_t channel, Knob *knob = nullptr) : channel(channel), knob(knob) {}
 };

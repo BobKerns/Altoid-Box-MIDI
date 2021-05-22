@@ -4,8 +4,8 @@
 
 template<class T>
 class Menu {
-  const char * const * items;
   const uint8_t count;
+  const char * const * items;
   uint8_t selection;
   bool wrap_items = false;;
   static const uint8_t top = 0;
