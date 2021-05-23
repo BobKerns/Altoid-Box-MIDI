@@ -9,6 +9,7 @@ using knobPressHandler = std::function<void(Knob&, bool)>;
 
 class Knob {
   public:
+  const unsigned int ROTATE_GUARD_MS = 500; // How long to time out on rotary motion
   enum Precision {
     NORMAL = 1,
     DOUBLE = 2,

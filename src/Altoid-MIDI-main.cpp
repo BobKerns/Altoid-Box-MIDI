@@ -1,6 +1,6 @@
 
 #include <Arduino.h>
-#include <USB-MIDI.h>
+#include "cables.h"
 #include "Callback.h"
 #include "Knob.h"
 #include "Menu.h"
@@ -12,14 +12,10 @@
 
 using DMenu = Menu<Display>;
 
-USBMIDI_CREATE_INSTANCE(0, CABLE1);
-//USBMIDI_CREATE_INSTANCE(1, CABLE2);
-//USBMIDI_CREATE_INSTANCE(2, CABLE3);
-
 void onNoteOn(byte cable, byte channel, byte note, byte velocity);
 void onNoteOff(byte cable, byte channel, byte note, byte velocity);
 void onProgramChange(byte cable,  byte channel, byte b2);
-void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos);
+void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos);
 void onKnobClick(const Knob& knob, uint8_t channel);
 void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, byte velocity);
 
@@ -27,7 +23,7 @@ Knob knobA("Casio", A7, A8, A9);
 Knob knobB("Keylab", A1, A2, A3);
 Knob knobC("Atom SQ", A10, A0, A6);
 
-ChannelState currentState[] = {
+ChannelState ChannelState::currentState[] = {
   ChannelState(0, &knobB),
   ChannelState(1),
   ChannelState(2),
@@ -55,8 +51,8 @@ const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
 DMenu kitMenu(num_kits, kits);
 
 // When we last sent a message. We suppress display of incoming MIDI for 500 ms after sending
-uint32_t last_send = 0;
-const uint32_t send_delay = 500;
+uint32_t last_receive = 0;
+const uint32_t receive_display_delay = 500;
 
 void setup() {
   delay(2000);
@@ -78,32 +74,33 @@ void setup() {
   //CABLE3.setHandleNoteOff([](byte channel, byte note, byte velocity){onNoteOff(3, channel, note, velocity);});
 
   auto config = [](Knob &knob, DMenu &menu, uint8_t chan){
-    knob
-    .range(0, menu.size() - 1, true)
-    .precision(Knob::Precision::NORMAL)
-    .onChange([&menu, chan](Knob & knob, int old, int pos){
-      onKnobChange(knob, menu, chan, pos);
-    })
-    .onPress([chan](Knob& knob, bool state){
-      onKnobClick(knob, chan);
-    })
-    .start(Knob::PULLUP, Knob::PULLUP, Knob::PULLUP);
-  };
-  programMenu.wrap();
-  kitMenu.wrap();
-  config(knobA, programMenu, 16);
-  config(knobB, programMenu, 1);
-  config(knobC, kitMenu, 10);
+      ChannelState::currentState[chan - 1].menu = &menu;
+        knob
+        .range(0, menu.size() - 1, true)
+        .precision(Knob::Precision::NORMAL)
+        .onChange([chan](Knob & knob, int old, int pos){
+        onKnobChange(knob, chan, pos);
+        })
+        .onPress([chan](Knob& knob, bool state){
+        onKnobClick(knob, chan);
+        })
+        .start(Knob::PULLUP, Knob::PULLUP, Knob::PULLUP);
+    };
+    programMenu.wrap();
+    kitMenu.wrap();
+    config(knobA, programMenu, 16);
+    config(knobB, programMenu, 1);
+    config(knobC, kitMenu, 10);
 
-  display.begin();
-  display.clear();
-  display.setTextCursor(0, 0);
-  display.setOffset(0, 0);
-  display.setFixedFont(ssd1306xled_font8x16);
+    display.begin();
+    display.clear();
+    display.setTextCursor(0, 0);
+    display.setOffset(0, 0);
+    display.setFixedFont(ssd1306xled_font8x16);
 
-  showBodyFor(10000, []{
+    showBodyFor(10000, []{
 
-    display.printFixedN (0, 8, "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
+    display.printFixedN (0, 8, DEBUG ? "DEBUG" : "BobKerns", STYLE_BOLD, FONT_SIZE_2X);
   });
 }
 
@@ -117,6 +114,8 @@ void loop() {
   knobA.poll();
   knobB.poll();
   knobC.poll();
+
+  ChannelState::sendProgramChanges();
 }
 
 const char * PROGMEM DIGITS = "0123456789abcdef";
@@ -130,39 +129,31 @@ std::string noteName(int note) {
   return std::string(note_name) + std::to_string(octave) + (strlen(note_name) < 2 ? " " : "");
 }
 
-
-void sendProgramChange(uint8_t program, uint8_t channel) {
-  last_send = millis();
-  currentState[channel - 1].keys.doKeys([channel](uint8_t key){
-    CABLE1.sendNoteOff(key, 0, channel);
-    return false;
-  });
-  CABLE1.sendProgramChange(program, channel);
-}
-
 void onKnobClick(const Knob& knob, uint8_t channel) {
-  auto &state = currentState[channel - 1];
+  auto &state = ChannelState::currentState[channel - 1];
+  auto menu = state.menu;
   if (state.on) {
     state.on = false;
-    sendProgramChange(0, channel);
-    showBodyFor(1000, []{
-      display.printFixedN(0, 16, "OFF", STYLE_BOLD, FONT_SIZE_2X);
+    auto itemName = menu->item(0);
+    state.queueProgramChange(0, itemName);
+    showBodyFor(1000, [itemName]{
+      display.printFixedN(0, 16, itemName, STYLE_BOLD, FONT_SIZE_2X);
     });
   } else {
     state.on = true;
-    sendProgramChange(state.program, channel);
-    showBodyFor(1000, [state]{
-      display.printFixedN(0, 16, state.programName, STYLE_BOLD, FONT_SIZE_2X);
+    auto itemName = menu->item(state.program);
+    state.queueProgramChange(state.program, itemName);
+    showBodyFor(1000, [itemName]{
+      display.printFixedN(0, 16, itemName, STYLE_BOLD, FONT_SIZE_2X);
     });
   }
 }
 
-void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) {
-  auto &state = currentState[channel - 1];
-  state.program = pos & 255;
-  state.programName = menu.item(state.program);
-  state.on = true;
-  sendProgramChange(pos & 255, channel);
+void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos) {
+  auto &state = ChannelState::currentState[channel - 1];
+  auto pgm = pos & 255;
+  auto menu = state.menu;
+  state.queueProgramChange(pgm, menu->item(pgm));
   showFor(5000, [knob, pos]() {
   char buf[8];
       buf[0] = DIGITS[(pos/100)%10];
@@ -182,24 +173,27 @@ void onKnobChange(const Knob& knob, DMenu &menu, uint8_t channel, uint32_t pos) 
       }
       display.printFixed(0, 0, knob.getName(), STYLE_NORMAL);
       display.printFixed(103, 0, numStr, STYLE_NORMAL);
-  }, [&menu, pos] {
-    menu.select(pos);
-    menu.draw(display);
+  }, [menu, pos] {
+    menu->select(pos);
+    menu->draw(display);
   });
 }
 
 void onNoteOn(byte cable, byte channel, byte note, byte velocity) {
   if (velocity > 0) {
-    currentState[channel - 1].keys.down(note);
-    noteMsg(true, cable, " ON", channel, note, velocity);
-  } else {
-    onNoteOff(cable, channel, note, velocity);
-  }
+        if (DEBUG_MAIN) {
+            debug((std::string("ON ") + std::to_string(channel) + " " + std::to_string(note)));
+        }
+        ChannelState::currentState[channel-1].keys.down(note);
+        noteMsg(true, cable, " ON", channel, note, velocity);
+    } else {
+        onNoteOff(cable, channel, note, velocity);
+    }
 }
 
 
 void onNoteOff(byte cable, byte channel, byte note, byte velocity) {
-  currentState[channel - 1].keys.up(note);
+  ChannelState::currentState[channel-1].keys.up(note);
   noteMsg(false, cable, "OFF", channel, note, velocity);
 }
 
@@ -208,9 +202,10 @@ int notes_on = 0;
 void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, byte velocity) {
   notes_on += (on ? 1 : -1);
   digitalWrite(LED_BUILTIN, notes_on > 0 ? LOW : HIGH);
-  if (DEBUG) {
-    if (last_send + send_delay <= millis()) {
+  if (DEBUG_MAIN) {
+    if (last_receive + receive_display_delay <= millis()) {
         std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":" + msg + " " + noteName(note) + "@" + std::to_string(velocity);
+        debug(txt);
         showHeadFor(500, [txt]{
         display.invertColors();
         display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
@@ -223,14 +218,15 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
 
 void onProgramChange(byte cable,  byte channel, byte b2) {
   byte pgm = b2 % num_programs;
-  currentState[channel - 1].program = pgm;
-  currentState[channel - 1].programName = programs[pgm];
-  if (currentState[channel - 1].knob) {
-      currentState[channel - 1].knob->write(pgm );
+  ChannelState::currentState[channel - 1].program = pgm;
+  ChannelState::currentState[channel - 1].programName = programs[pgm];
+  if (ChannelState::currentState[channel - 1].knob) {
+      ChannelState::currentState[channel - 1].knob->write(pgm);
   }
-  if (DEBUG) {
-    if (last_send + send_delay <= millis()) {
+  if (DEBUG_MAIN) {
+    if (last_receive + receive_display_delay <= millis()) {
         std::string txt =  std::to_string(cable) + "!" + std::to_string(channel) + ":PGM" + " #" + std::to_string(b2);
+        debug(txt);
         showHeadFor(500, [txt]{
         display.invertColors();
         display.printFixed(0, 0, txt.c_str(), STYLE_NORMAL);
@@ -242,12 +238,12 @@ void onProgramChange(byte cable,  byte channel, byte b2) {
 
 
 void defaultDisplayHead() {
-  display.printFixed(0, 0, "Altoids MIDI Box", STYLE_NORMAL);
+  display.printFixed(0, 0, DEBUG ? "DEBUG BOX" : "Altoids MIDI Box", STYLE_NORMAL);
 }
 
 void defaultDisplayBody() {
   auto line = [](uint8_t i, uint8_t channel){
-    auto &state = currentState[channel- 1];
+    auto &state = ChannelState::currentState[channel- 1];
     if (state.on) {
       display.printFixed(0, i * 16, state.programName, STYLE_BOLD);
     } else {

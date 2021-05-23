@@ -194,7 +194,7 @@ int Knob::read() {
             auto skew = count & 0x3;
             if (skew) {
                 unsigned long now = millis();
-                if (now - rotate_millis > 500) {
+                if (now - rotate_millis > ROTATE_GUARD_MS) {
                     // Round, unless TDC.
                     switch (skew) {
                         case 1:
@@ -355,11 +355,40 @@ int Knob::read() {
 }
 
 void Knob::write(int c) {
-  auto x = (c * 4/count_precision - min_count) % (max_count - min_count) + min_count;
-  noInterrupts();
-  count = previous_count = x;
-  sw_state = SwitchState::IDLE;
-  interrupts();
+    // Keeping as much of the code outside of the locked range of interrupts as possible.
+    auto now = millis();
+        if (now > rotate_millis + ROTATE_GUARD_MS) {
+        auto incr = 4/count_precision;
+        auto range = (max_count - min_count);
+        auto ncount = (c * incr - min_count) % range + min_count;
+        auto ncount_max = ((c + 1) * incr - min_count) % range + min_count;
+        // Don't set if it would not be an actual user-level change in the value.
+        if (ncount == ncount_max - 1) {
+            // Optimized case. Like normal, but anything not equal counts as new.
+            noInterrupts();
+            if (ncount != count) {
+                count = previous_count = c;
+                state = 0;
+            }
+            interrupts();
+        } else if (ncount < ncount_max) {
+            // Normal case; new counts are either smaller, or ncount_max or larger.
+            noInterrupts();
+            if (ncount < count || count >= ncount_max) {
+                count = previous_count = c;
+                state = 0;
+            }
+            interrupts();
+        } else {
+            // Max has wrapped around; anything less than our count is new.
+            noInterrupts();
+            if (count < ncount) {
+                count = previous_count = c;
+                state = 0;
+            }
+            interrupts();
+        }
+    }
 }
 
 Knob &Knob::minCount(int c) {
