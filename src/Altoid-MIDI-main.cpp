@@ -8,10 +8,9 @@
 #include "ChannelState.h"
 #include "Window.h"
 #include <string>
+#include "debug.h"
 
 using DMenu = Menu<Display>;
-
-const boolean DEBUG = false;
 
 USBMIDI_CREATE_INSTANCE(0, CABLE1);
 //USBMIDI_CREATE_INSTANCE(1, CABLE2);
@@ -61,6 +60,9 @@ const uint32_t send_delay = 500;
 
 void setup() {
   delay(2000);
+  if(DEBUG) {
+    Serial.begin(9600);
+  }
 
   pinMode(LED_BUILTIN, OUTPUT);
 
