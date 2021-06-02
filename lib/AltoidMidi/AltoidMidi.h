@@ -2,6 +2,7 @@
 
 #include <Knob.h>
 #include <ChannelState.h>
+#include <DisplayMgr.h>
 
 
 extern void onNoteOn(byte cable, byte channel, byte note, byte velocity);
