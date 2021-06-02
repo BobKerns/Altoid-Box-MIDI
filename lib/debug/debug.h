@@ -26,3 +26,7 @@ inline void debug(const std::string &msg) {
         debug_internal(msg);
     }
 }
+
+extern std::string hex(uint8_t val);
+extern std::string hex(uint16_t val);
+extern std::string hex(uint32_t val);
