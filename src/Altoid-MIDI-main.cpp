@@ -2,52 +2,11 @@
 #include <Arduino.h>
 #include "cables.h"
 #include <Callback.h>
-#include <Knob.h>
 #include <Menu.h>
 #include <DisplayMgr.h>
-#include "ChannelState.h"
 #include <string>
 #include <debug.h>
-
-using DMenu = Menu<Display>;
-
-void onNoteOn(byte cable, byte channel, byte note, byte velocity);
-void onNoteOff(byte cable, byte channel, byte note, byte velocity);
-void onProgramChange(byte cable,  byte channel, byte b2);
-void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos);
-void onKnobClick(const Knob& knob, uint8_t channel);
-void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, byte velocity);
-
-Knob knobA("Casio", A7, A8, A9);
-Knob knobB("Keylab", A1, A2, A3);
-Knob knobC("Atom SQ", A10, A0, A6);
-
-ChannelState ChannelState::currentState[] = {
-  ChannelState(0, &knobB),
-  ChannelState(1),
-  ChannelState(2),
-  ChannelState(3),
-  ChannelState(4),
-  ChannelState(5),
-  ChannelState(6),
-  ChannelState(7),
-  ChannelState(8),
-  ChannelState(9, &knobC),
-  ChannelState(10),
-  ChannelState(11),
-  ChannelState(12),
-  ChannelState(13),
-  ChannelState(14),
-  ChannelState(15, &knobA)
-};
-
-const char* const PROGMEM programs[] = {"Off", "Lead", "Piano", "Orch+Piano", "Orchestra", "Orch+Pad", "Pad", "Reed", "Flutes", "Brass", "Strings", "B", "C4", "C#4", "Percussion", "Tuned Perc", "E4", "F4", "F#4", "Solo 1", "Solo 2", "Solo 3", "Solo 4", "FX"};
-const uint8_t num_programs = sizeof(programs)/sizeof(const char *);
-DMenu programMenu(num_programs, programs);
-
-const char* const PROGMEM kits[] = {"Percussion", "Tuned Perc", "E4", "F4", "F#4", "Solo 1", "Solo 2", "Solo 3", "Solo 4", "FX"};
-const uint8_t num_kits = sizeof(kits)/sizeof(const char *);
-DMenu kitMenu(num_kits, kits);
+#include <AltoidMidi.h>
 
 // When we last sent a message. We suppress display of incoming MIDI for 500 ms after sending
 uint32_t last_receive = 0;
@@ -216,9 +175,9 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
 
 
 void onProgramChange(byte cable,  byte channel, byte b2) {
-  byte pgm = b2 % num_programs;
+  byte pgm = b2 % programMenu.count;
   ChannelState::currentState[channel - 1].program = pgm;
-  ChannelState::currentState[channel - 1].programName = programs[pgm];
+  ChannelState::currentState[channel - 1].programName = programMenu.item(pgm);
   if (ChannelState::currentState[channel - 1].knob) {
       ChannelState::currentState[channel - 1].knob->write(pgm);
   }
