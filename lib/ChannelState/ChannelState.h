@@ -19,10 +19,12 @@ class ChannelState {
         ChannelState(uint8_t channel, Knob *knob = nullptr) : channel(channel), knob(knob), keys(channel) {}
         static void sendProgramChanges();
         void queueProgramChange(uint8_t program, const char * programName);
+        void programChanged(uint8_t program);
     private:
         const unsigned int send_delay = 500;
         unsigned long send_program_at = 0;
         uint8_t send_program = 0;
         const char * send_program_name = nullptr;
         void sendProgramChange();
+        void allNotesOff();
 };

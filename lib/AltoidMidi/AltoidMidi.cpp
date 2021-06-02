@@ -147,10 +147,12 @@ void noteMsg(boolean on, byte cable, const char* msg, byte channel, byte note, b
 
 void onProgramChange(byte cable,  byte channel, byte b2) {
     byte pgm = b2 % programMenu.count;
-    ChannelState::currentState[channel - 1].program = pgm;
-    ChannelState::currentState[channel - 1].programName = programMenu.item(pgm);
-    if (ChannelState::currentState[channel - 1].knob) {
-        ChannelState::currentState[channel - 1].knob->write(pgm);
+    ChannelState &state = ChannelState::currentState[channel - 1];
+    state.programChanged(pgm);
+    state.program = pgm;
+    state.programName = programMenu.item(pgm);
+    if (state.knob) {
+        state.knob->write(pgm);
     }
     if (DEBUG_MAIN) {
         if (last_receive + receive_display_delay <= millis()) {
