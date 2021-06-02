@@ -3,9 +3,9 @@
 
 template<class D>
 void WindowImpl<D>::setState() {
-  _display.setFont(*m_font);
-  _display.setColor(m_color);
-  _display.setBackground(m_bgColor);
+    _display.setFont(*m_font);
+    _display.setColor(m_color);
+    _display.setBackground(m_bgColor);
 }
 /**
  * Draws pixel on specified position
@@ -15,9 +15,9 @@ void WindowImpl<D>::setState() {
  */
 template<class D>
 void WindowImpl<D>::putPixel(lcdint_t x, lcdint_t y) {
-  xlate(x, y, [this](auto x, auto y, auto w, auto h){
-    _display.putPixel(x, y);
-  });
+    xlate(x, y, [this](auto x, auto y, auto w, auto h){
+        _display.putPixel(x, y);
+    });
 };
 
 /**
@@ -29,9 +29,9 @@ void WindowImpl<D>::putPixel(lcdint_t x, lcdint_t y) {
  */
 template<class D>
 void WindowImpl<D>::drawVLine(lcdint_t x1, lcdint_t y1, lcdint_t y2) {
-  xlate2(x1, y1, x1, y2, [this](auto x1, auto y1, auto x2, auto y2){
-    _display.drawVLine(x1, y1, y2);
-  });
+    xlate2(x1, y1, x1, y2, [this](auto x1, auto y1, auto x2, auto y2){
+        _display.drawVLine(x1, y1, y2);
+    });
 };
 
 /**
@@ -43,9 +43,9 @@ void WindowImpl<D>::drawVLine(lcdint_t x1, lcdint_t y1, lcdint_t y2) {
  */
 template<class D>
 void WindowImpl<D>::drawHLine(lcdint_t x1, lcdint_t y1, lcdint_t x2) {
-  xlate2(x1, y1, x2, y1, [this](auto x1, auto y1, auto x2, auto y2){
-    _display.drawHLine(x1, y1, x2);
-  });
+    xlate2(x1, y1, x2, y1, [this](auto x1, auto y1, auto x2, auto y2){
+        _display.drawHLine(x1, y1, x2);
+    });
 }
 ;
 /**
@@ -58,9 +58,9 @@ void WindowImpl<D>::drawHLine(lcdint_t x1, lcdint_t y1, lcdint_t x2) {
  */
  template<class D>
 void WindowImpl<D>::fillRect(lcdint_t x1, lcdint_t y1, lcdint_t x2, lcdint_t y2) {
-  xlate2(x1, y1, x2, y2, [this](auto x1, auto y1, auto x2, auto y2){
-    _display.fillRect(x1, y1, x2, y2);
-  });
+    xlate2(x1, y1, x2, y2, [this](auto x1, auto y1, auto x2, auto y2){
+        _display.fillRect(x1, y1, x2, y2);
+    });
 };
 
 /**
@@ -75,9 +75,9 @@ void WindowImpl<D>::fillRect(lcdint_t x1, lcdint_t y1, lcdint_t x2, lcdint_t y2)
  */
 template<class D>
 void WindowImpl<D>::drawXBitmap(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *bitmap) {
-  xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
-    _display.drawXBitmap(x, y, w, h, bitmap);
-  });
+    xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
+        _display.drawXBitmap(x, y, w, h, bitmap);
+    });
 };
 
 /**
@@ -96,9 +96,9 @@ void WindowImpl<D>::drawXBitmap(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBitmap1(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *bitmap) {
-  xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
-    _display.drawBitmap1(x, y, w, h, bitmap);
-  });
+    xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
+        _display.drawBitmap1(x, y, w, h, bitmap);
+    });
 };
 
 /**
@@ -113,9 +113,9 @@ void WindowImpl<D>::drawBitmap1(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::gfx_drawMonoBitmap(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *buf) {
-  xlateArea(x, y, w, h, [this, buf](auto x, auto y, auto w, auto h){
-    _display.gfx_drawMonoBitmap(x, y, w, h, buf);
-  });
+    xlateArea(x, y, w, h, [this, buf](auto x, auto y, auto w, auto h){
+        _display.gfx_drawMonoBitmap(x, y, w, h, buf);
+    });
 };
 
 /**
@@ -129,9 +129,9 @@ void WindowImpl<D>::gfx_drawMonoBitmap(lcdint_t x, lcdint_t y, lcduint_t w, lcdu
  */
 template<class D>
 void WindowImpl<D>::drawBitmap4(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *bitmap) {
-  xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
-    _display.drawBitmap4(x, y, w, h, bitmap);
-  });
+    xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
+        _display.drawBitmap4(x, y, w, h, bitmap);
+    });
 };
 
 /**
@@ -145,9 +145,9 @@ void WindowImpl<D>::drawBitmap4(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBitmap8(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *bitmap) {
-  xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
-    _display.drawBitmap8(x, y, w, h, bitmap);
-  });
+    xlateArea(x, y, w, h, [this, bitmap](auto x, auto y, auto w, auto h){
+        _display.drawBitmap8(x, y, w, h, bitmap);
+    });
 };
 
 /**
@@ -162,9 +162,9 @@ void WindowImpl<D>::drawBitmap8(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBitmap16(lcdint_t xpos, lcdint_t ypos, lcduint_t w, lcduint_t h, const uint8_t *bitmap) {
-  xlateArea(xpos, ypos, w, h, [this, bitmap](auto xpos, auto ypos, auto w, auto h){
-    _display.drawBitmap16(xpos, ypos, w, h, bitmap);
-  });
+    xlateArea(xpos, ypos, w, h, [this, bitmap](auto xpos, auto ypos, auto w, auto h){
+        _display.drawBitmap16(xpos, ypos, w, h, bitmap);
+    });
 };
 
 /**
@@ -185,9 +185,9 @@ void WindowImpl<D>::drawBitmap16(lcdint_t xpos, lcdint_t ypos, lcduint_t w, lcdu
  */
 template<class D>
 void WindowImpl<D>::drawBuffer1(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *buffer) {
-  xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
-    _display.drawBuffer1(x, y, w, h, buffer);
-  });
+    xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
+        _display.drawBuffer1(x, y, w, h, buffer);
+    });
 };
 
 /**
@@ -203,9 +203,9 @@ void WindowImpl<D>::drawBuffer1(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBuffer4(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *buffer) {
-  xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
-    _display.drawBuffer4(x, y, w, h, buffer);
-  });
+    xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
+        _display.drawBuffer4(x, y, w, h, buffer);
+    });
 };
 
 /**
@@ -221,9 +221,9 @@ void WindowImpl<D>::drawBuffer4(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBuffer8(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h, const uint8_t *buffer) {
-  xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
-    _display.drawBuffer8(x, y, w, h, buffer);
-  });
+    xlateArea(x, y, w, h, [this, buffer](auto x, auto y, auto w, auto h){
+        _display.drawBuffer8(x, y, w, h, buffer);
+    });
 };
 
 /**
@@ -238,9 +238,9 @@ void WindowImpl<D>::drawBuffer8(lcdint_t x, lcdint_t y, lcduint_t w, lcduint_t h
  */
 template<class D>
 void WindowImpl<D>::drawBuffer16(lcdint_t xpos, lcdint_t ypos, lcduint_t w, lcduint_t h, const uint8_t *buffer) {
-  xlateArea(xpos, ypos, w, h, [this, buffer](auto xpos, auto ypos, auto w, auto h){
-    _display.drawBuffer16(xpos, ypos, w, h, buffer);
-  });
+    xlateArea(xpos, ypos, w, h, [this, buffer](auto xpos, auto ypos, auto w, auto h){
+        _display.drawBuffer16(xpos, ypos, w, h, buffer);
+    });
 };
 
 /**
@@ -248,7 +248,7 @@ void WindowImpl<D>::drawBuffer16(lcdint_t xpos, lcdint_t ypos, lcduint_t w, lcdu
  */
 template<class D>
 void WindowImpl<D>::clear() {
-  _display.clear();
+    _display.clear();
 };
 
 /**
@@ -258,7 +258,7 @@ void WindowImpl<D>::clear() {
  */
 template<class D>
 void WindowImpl<D>::fill(uint16_t color) {
-  _display.fill(color);
+    _display.fill(color);
 };
 
 /**
@@ -268,7 +268,7 @@ void WindowImpl<D>::fill(uint16_t color) {
  */
 template<class D>
 uint8_t WindowImpl<D>::printChar(uint8_t c) {
-  return _display.printChar(c);
+    return _display.printChar(c);
 };
 
 /**
@@ -277,7 +277,7 @@ uint8_t WindowImpl<D>::printChar(uint8_t c) {
  */
 template<class D>
 size_t WindowImpl<D>::write(uint8_t c) {
-  return _display.write(c);
+    return _display.write(c);
 };
 
 /**
@@ -292,9 +292,9 @@ size_t WindowImpl<D>::write(uint8_t c) {
  */
 template<class D>
 void WindowImpl<D>::printFixed(lcdint_t xpos, lcdint_t y, const char *ch, EFontStyle style) {
-  xlate(xpos, y, [this, ch, style](auto xpos, auto y, auto w, auto h){
-    _display.printFixed(xpos, y, ch, style);
-  });
+    xlate(xpos, y, [this, ch, style](auto xpos, auto y, auto w, auto h){
+        _display.printFixed(xpos, y, ch, style);
+    });
 };
 
 /**
@@ -318,7 +318,7 @@ void WindowImpl<D>::printFixed(lcdint_t xpos, lcdint_t y, const char *ch, EFontS
  */
 template<class D>
 void WindowImpl<D>::printFixedN(lcdint_t xpos, lcdint_t y, const char *ch, EFontStyle style, uint8_t factor) {
-  xlate(xpos, y, [this, ch, style, factor](auto xpos, auto y, auto w, auto h){
-    _display.printFixedN(xpos, y, ch, style, factor);
-  });
+    xlate(xpos, y, [this, ch, style, factor](auto xpos, auto y, auto w, auto h){
+        _display.printFixedN(xpos, y, ch, style, factor);
+    });
 };

@@ -96,8 +96,8 @@ void onKnobChange(const Knob& knob, uint8_t channel, uint32_t pos) {
             numStr++;
             numStart += 6;
             if (buf[1] == '0') {
-            numStr++;
-            numStart += 6;
+                numStr++;
+                numStart += 6;
             }
         }
         display.printFixed(0, 0, knob.getName(), STYLE_NORMAL);

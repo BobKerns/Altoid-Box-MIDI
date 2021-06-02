@@ -28,14 +28,14 @@ void KeyTracker::doKeys(keyMapper mapper) {
     for (uint8_t i = 0; i < 16; i++) {
         auto b = bitmap[i];
         if (b) {
-        for (uint8_t j = 0; j < 8; j++) {
-            if (b & (1 << j)) {
-            auto key = i * 8 + j;
-            if (!mapper(key)) {
-                up(key);
+            for (uint8_t j = 0; j < 8; j++) {
+                if (b & (1 << j)) {
+                    auto key = i * 8 + j;
+                    if (!mapper(key)) {
+                        up(key);
+                    }
+                }
             }
-            }
-        }
         }
     }
 }
