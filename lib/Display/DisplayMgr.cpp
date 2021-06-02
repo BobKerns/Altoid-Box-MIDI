@@ -57,3 +57,11 @@ void doDisplay() {
     show();
   }
 }
+
+// Update the display with the latest data
+void updateDisplay(bool override) {
+    // If we're not currently showing a temp display
+    if (override || !tmpDisplay_end) {
+        tmpDisplay_end = 1;
+    }
+}

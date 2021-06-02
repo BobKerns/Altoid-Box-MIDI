@@ -36,3 +36,7 @@ extern void showHeadFor(uint32_t ms, DisplayFn head);
 
 // Make these be the current display body until ms milliseconds have passed.
 extern void showBodyFor(uint32_t ms, DisplayFn body);
+
+// Update the main display with the latest data
+// Set override = true to immediately flush any temporary display.
+extern void updateDisplay(bool override = false);

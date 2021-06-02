@@ -162,6 +162,8 @@ void onProgramChange(byte cable,  byte channel, byte b2) {
                 display.invertColors();
             });
         }
+    } else {
+        updateDisplay();
     }
 }
 
