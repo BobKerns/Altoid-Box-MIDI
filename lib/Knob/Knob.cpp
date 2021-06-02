@@ -2,7 +2,7 @@
 #include "Knob.h"
 
 #ifdef KNOB_TRACE
-#include "DisplayMgr.h"
+#include <DisplayMgr.h>
 #endif
 
 unsigned int Knob::next_idx = 0;

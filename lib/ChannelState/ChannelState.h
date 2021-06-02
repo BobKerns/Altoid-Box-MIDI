@@ -1,9 +1,9 @@
 #pragma once
 
-#include "KeyTracker.h"
-#include "Knob.h"
-#include "Menu.h"
-#include "DisplayMgr.h"
+#include <KeyTracker.h>
+#include <Knob.h>
+#include <Menu.h>
+#include <DisplayMgr.h>
 using DMenu = Menu<Display>;
 
 class ChannelState {

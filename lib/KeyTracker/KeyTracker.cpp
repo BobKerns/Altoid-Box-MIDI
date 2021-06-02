@@ -1,7 +1,7 @@
 
 #include <Arduino.h>
-#include "KeyTracker.h"
-#include "debug.h"
+#include <KeyTracker.h>
+#include <debug.h>
 
 // The keys go up
 void KeyTracker::up(uint8_t key) {

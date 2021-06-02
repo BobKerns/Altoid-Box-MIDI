@@ -1,14 +1,13 @@
-
+// Main program
 #include <Arduino.h>
 #include "cables.h"
-#include "Callback.h"
-#include "Knob.h"
-#include "Menu.h"
-#include "DisplayMgr.h"
+#include <Callback.h>
+#include <Knob.h>
+#include <Menu.h>
+#include <DisplayMgr.h>
 #include "ChannelState.h"
-#include "Window.h"
 #include <string>
-#include "debug.h"
+#include <debug.h>
 
 using DMenu = Menu<Display>;
 

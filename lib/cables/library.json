@@ -1,0 +1,26 @@
+{
+    "name": "cables",
+    "version": "0.1.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bob Kerns",
+            "url": "https://github.com/BobKerns"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/BobKerns/Altoid-Box-MIDI.git"
+    },
+    "keywords": [
+        "MIDI",
+        "Arduino"
+    ],
+    "frameworks": ["arduino"],
+    "platforms": ["atmelsam"],
+    "build": {
+        "flags": [
+             "-std=c++17"
+        ]
+    }
+}
