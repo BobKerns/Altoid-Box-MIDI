@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2021 Bob Kerns
+ * License: MIT
+ */
 // Enable callback functional objects to be used where raw C functions are expected.
 #pragma once
 #undef min

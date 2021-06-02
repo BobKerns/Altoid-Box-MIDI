@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2021 Bob Kerns
+ * License: MIT
+ */
 //define KNOB_TRACE
 #include "Knob.h"
 

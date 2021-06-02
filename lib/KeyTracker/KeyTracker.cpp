@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2021 Bob Kerns
+ * License: MIT
+ */
 
 #include <Arduino.h>
 #include <KeyTracker.h>
