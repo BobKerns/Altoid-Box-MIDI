@@ -81,4 +81,4 @@ const uint16_t PID_CODES_VID = 0x1209;
  * @param manufacturer a string or `nullptr`
  * @param product a string or `nullptr`
  */
-extern void renameUSB(uint8_t vid, uint8_t pid, char* manufacturer = nullptr, char* product = nullptr);
+extern void renameUSB(uint16_t vid, uint16_t pid, char* manufacturer = nullptr, char* product = nullptr);
