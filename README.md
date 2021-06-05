@@ -6,9 +6,36 @@ The result is:
 
 ![Image of Altoid MIDIBox](Altoid-MIDIBox.jpeg)
 
-The hardware is just 3 quadrature rotary encoders and a display, connected on a breadboard according to this diagram. The colors indicate connected pads, either by jumper or solder bridge. The knob and display connectors are right-angle headers.
+The hardware is just 3 quadrature rotary encoders and a display, connected on a breadboard according to this diagram. The colors indicate connected pads, either by jumper or solder bridge. The knob and display connectors are right-angle headers. The specific breadboard I used is one section of these [ElectroCookie Snappable PCB, Strip Board with Power Rails](https://www.amazon.com/gp/product/B07ZYTZ48N/ref=ppx_yo_dt_b_asin_image_o04_s01?ie=UTF8&psc=1).
+
+I drilled holes for the rotary encoders in the lid, spaced to fit. (It's a very tight fit; if you can find encoders with a smaller footprint it would make assembly easier.) I cut a hole for the display, then lined the edges with Sugru moldable adhesive to protect against the sharp edges (and attempted to use it to mount the display, but this was not successful. I ended up using cyanacrolate glue).
+
+The circuit board is really there just to provide a platform for connections directly to the Seeeduino XIAO. I think on my next build, I will eliminate it entirely and wire directly to the XIAO MCU, to free up space. Aternatively, I might create a PCB, to better accomodate the mounting of the display, encoders, and position the XIAO so the USB connector is firmly placed at the small cutout in the rear. (I managed to firmly place it with glue, improvised standoffs, and a bit of bracing.)
+
+I'll need to give better instructions and images to make this more turnkey, but part of the fun was figuring out how to get everything to fit.
+
+### Parts list
+* [Seeeduino XIAO](https://www.amazon.com/gp/product/B087D2VSBL/ref=ppx_yo_dt_b_asin_title_o07_s00)
+* [Altoid Box](https://www.amazon.com/ALTOIDS-Curiously-Strong-Peppermint-Pocket-Sized/dp/B07GG67NNH/ref=sr_1_7) (Remove and eat candy before use)
+* [Rotary Encoders (quadature, with momentary pushbutton action)](https://www.amazon.com/gp/product/B07B68H6R8/ref=ppx_yo_dt_b_asin_title_o01_s02) x3
+* [Display OLED 12864 128x64](https://www.amazon.com/gp/product/B08FD643VZ/ref=ppx_yo_dt_b_asin_title_o03_s01)
+* [ElectroCookie Snappable PCB, Strip Board with Power Rails](https://www.amazon.com/gp/product/B07ZYTZ48N/ref=ppx_yo_dt_b_asin_image_o04_s01?ie=UTF8&psc=1)
+* [6-Pin Generic Female Headers](https://www.amazon.com/gp/product/B00OE8GTQ8/ref=ppx_yo_dt_b_asin_title_o07_s02) x4
+* Male-female jumper wires x19
+* [Sugru](https://www.amazon.com/Sugru-I000951-Moldable-Multi-Purpose-Creative/dp/B089WHM982/ref=sr_1_1_sspa) (<span style='color:red; font-weight:bold;'>Red</span> used to match Peppermint Altoids colors)
+* [Cyanoacrylate Glue](https://www.amazon.com/gp/product/B07VWL8PMF/ref=ppx_yo_dt_b_asin_title_o04_s00)
+
+## Wiring Up the pieces
+
+In this diagram are the four headers and a Seeduino XIAO. Each square inside the black box indicates a grid position. Grayed out have no pads, the ones with a circle are the mounting holes. The orange boxes denote the pad sections that are connected on the breadboard.
+
+Each color denotes a type of signal. The individual switch signals additionally are labeled with the pin number they connect to; these are connected with short jumper wires.
+
+Thus, on Knob C, the portion of the quadrature signal I've designated as "clock" has a blue pad group, one cell of which is labelled "10". This connects to pin 10 on the XIAO.
 
 ![Wiring Diagram](wiring-diagram.png)
 
-[MIT License](LICENSE.md)
+[This project assigns its own USB VID/PID pair (values TBD)](USB_IDS.md). To do this, we use the PlatformIO facility to [Override the Board Configuration](https://docs.platformio.org/en/latest/projectconf/advanced_scripting.html#override-board-configuration).
+
+[MIT License](LICENSE.md)\
 Copyright 2021 by Bob BobKerns
