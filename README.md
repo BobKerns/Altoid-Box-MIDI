@@ -67,5 +67,7 @@ Yes, there is no provision for such a reset, and I don't see any ready way to al
 
 [This project assigns its own USB VID/PID pair (values TBD)](USB_IDS.md). To do this, we use the PlatformIO facility to [Override the Board Configuration](https://docs.platformio.org/en/latest/projectconf/advanced_scripting.html#override-board-configuration).
 
+We use a [VID/PID pair assigned by picodes](https://github.com/pidcodes/pidcodes.github.com/blob/master/1209/C10C/index.md).
+
 [MIT License](LICENSE.md)\
 Copyright 2021 by Bob BobKerns
